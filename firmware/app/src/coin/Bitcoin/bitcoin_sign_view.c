@@ -75,9 +75,8 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
 	int num_perpage = mScreenHeight / output_item_height;
 	//move ok to right pos
 	int total_height = first_output_offset + mScreenHeight * ((item_count + num_perpage - 1) / num_perpage);
-	db_msg("total_height:%d mScreenHeight:%d item_count:%d num_perpage:%d output_item_height:%d",
-	       total_height, mScreenHeight, item_count, num_perpage, output_item_height);
-	view->total_height = total_height;
+    db_msg("change_count:%d, input_n:%d, output_n:%d", change_count, msg->input_n, msg->output_n);
+	db_msg("total_height:%d mScreenHeight:%d item_count:%d num_perpage:%d output_item_height:%d", total_height, mScreenHeight, item_count, num_perpage, output_item_height);
 	view->coin_type = coinConfig->type;
 	view->coin_uname = coinConfig->uname;
 	view->coin_name = coinConfig->name;
@@ -90,7 +89,7 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
 		for (i = 0; i < msg->output_n; i++) {
 			if (!(msg->outputs[i].flag & BITCOIN_OUTPUT_FLAG_CHANGE)) continue;
 
-			offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height;
+            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height + view->total_height;
 
 			dwin_add_txt_offset(view, MK_txs_dlabel_pay_from_index, viewid++, res_getLabel(LANG_LABEL_TXS_CHANGE_TITLE), offset);
 			if (strlen(msg->outputs[i].address) >= 42) {
@@ -115,7 +114,7 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
 			} else {
 				strlcpy(tmpbuf, res_getLabel(LANG_LABEL_TXS_FROM_TITLE), sizeof(tmpbuf));
 			}
-			offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height;
+            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height + view->total_height;
 			dwin_add_txt_offset(view, MK_txs_dlabel_pay_from_index, viewid++, tmpbuf, offset);
 			if (strlen(msg->inputs[i].address) >= 42) {
 				omit_string(tmpbuf, msg->inputs[i].address, 10, 27);
@@ -131,7 +130,9 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
 			item_index++;
 		}
 	}
-	return 0;
+    view->total_height += total_height;
+
+    return 0;
 }
 
 static int on_sign_show(void *session, DynamicViewCtx *view) {
@@ -144,10 +145,6 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
 	BitcoinSignRequest *msg = &s->req;
 	DBTxCoinInfo *db = &view->db;
-
-	if (view->show_more && msg->brc20_type != BRC20_DAPP_MSG) {
-		return on_sign_show_more(session, view);
-	}
 
 	memset(db, 0, sizeof(DBTxCoinInfo));
 	if (proto_check_exchange(&msg->exchange) != 0) {
@@ -296,8 +293,7 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 		//move ok to right pos
 		int total_height = first_output_offset + mScreenHeight * ((out_item_count + num_perpage - 1) / num_perpage);
 
-		db_msg("first_output_offset:%d output_item_height:%d out_item_count:%d total_height:%d num_perpage:%d",
-			first_output_offset, output_item_height, out_item_count, total_height, num_perpage);
+		db_msg("first_output_offset:%d output_item_height:%d out_item_count:%d total_height:%d num_perpage:%d", first_output_offset, output_item_height, out_item_count, total_height, num_perpage);
 
 		if (msg->brc20_type == BRC20_NFT) {
 			const char *name = msg->brc20.name;
@@ -429,9 +425,12 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 		}
 	}
 
+    if (view->has_more && msg->brc20_type != BRC20_DAPP_MSG) {
+        on_sign_show_more(session, view);
+    }
+
 	db_msg("db->coin_type:%d db->coin_uname:%s",db->coin_type, db->coin_uname);
 	if (view->msg_from == MSG_FROM_QR_APP) {
-
 		if (!storage_isCoinExist(db->coin_type, db->coin_uname)) {
 			DBCoinInfo dbinfo;
 			memset(&dbinfo, 0, sizeof(dbinfo));

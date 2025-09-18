@@ -1,5 +1,5 @@
-#ifndef _WALLET_TXSHOW_H
-#define _WALLET_TXSHOW_H
+#ifndef _WALLET_TX_RAW_DATA_WIN_H
+#define _WALLET_TX_RAW_DATA_WIN_H
 
 #include <time.h>
 #include "key_event.h"
@@ -14,11 +14,11 @@
 #include "coin_adapter.h"
 #include "dynamic_win.h"
 
-class TxShowWin : public CommonWindow {
+class TxRawDataWin : public CommonWindow {
 public:
-	TxShowWin();
+	TxRawDataWin();
 
-	~TxShowWin();
+	~TxRawDataWin();
 
 	PROC_RET winProc(HWND hWnd, PROC_MSG_TYPE message, WPARAM wParam, LPARAM lParam);
 
@@ -29,7 +29,7 @@ private:
 
 	int freeWinData();
 
-	int onSignReqData(ProtoClientMessage *req);
+	void onTxPorcessData(TxPorcessData *txp);
 
 	int getIconState(int id);
 
@@ -41,17 +41,19 @@ private:
 
 	int onScrollWindow(int scroll_size);
 
-	int doSignReq();
+    int doSignReq();
 
-	TxPorcessData mTxp[1];
+    int onSignReqData(ProtoClientMessage *req);
+
+    HWND mHwndNaviPanel;
+    TxPorcessData mTxp[1];
 	DynamicViewCtx mDView[1];
-
-	int mMsgFrom;
-	ProtoClientMessage *mClientMessage;
-	HWND mHwndNaviPanel;
-	int mShowRet;
-	BITMAP *mBitmapLogo;
-	int mIsShowRawData;
+    DBTxCoinInfo mDBTxCoinInfo;
+    ProtoClientMessage *mClientMessage;
+    int mShowRet;
+    BITMAP *mBitmapLogo;
+    int mMsgFrom;
+    char *mRawDataStr;
 };
 
 #endif

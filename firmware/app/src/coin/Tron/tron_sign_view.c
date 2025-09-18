@@ -21,6 +21,9 @@ enum {
 	TXS_LABEL_FIELD_VALUE2,
 	TXS_LABEL_VOTE_ADDRESS,
 	TXS_LABEL_VOTE_NUMBER,
+    TXS_LABEL_FEED_TITLE,
+    TXS_LABEL_FEED_VALUE,
+    TXS_LABEL_GAS_STATION_VALUE,
 	TXS_LABEL_MEMO_TITLE,
 	TXS_LABEL_MEMO_CONTENT,
 	TXS_LABEL_MAXID,
@@ -39,7 +42,10 @@ static int label_mk_map[TXS_LABEL_MAXID] = {
 		MK_tx_dlabel_msg_value2,
 		MK_trx_vote_address,
 		MK_trx_vote_number,
-		MK_bnc_label_memo_title,
+        MK_bnc_label_feed_title,
+        MK_bnc_label_feed_value,
+        MK_bnc_label_gas_station_value,
+        MK_bnc_label_memo_title,
 		MK_bnc_label_memo_content,
 };
 
@@ -131,31 +137,45 @@ static int on_sign_show_transfer_x_contract(int contract_type, coin_state *s, Dy
 		db_error("invalid to_address:%s", transaction->transfer.to_address);
 		return -116;
 	}
-	
-	if (!is_empty_string(transaction->memo)) {
-		if (is_printable_str(transaction->memo)) {
-			view_add_txt(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_TITLE));
-			view_add_txt(TXS_LABEL_MEMO_CONTENT, transaction->memo);
-		} else {
-			view_add_txt(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_HEX_TITLE));
-			ret = strlen(transaction->memo);
-			if (ret * 2 < (int) sizeof(tmpbuf)) {
-				bin_to_hex((const unsigned char *) transaction->memo, ret, tmpbuf);
-				view_add_txt(TXS_LABEL_MEMO_CONTENT, tmpbuf);
-			} else {
-				char *hex = (char *) malloc((ret + 1) * 2);
-				if (hex) {
-					memset(hex, 0, (ret + 1) * 2);
-					bin_to_hex((const unsigned char *) transaction->memo, ret, hex);
-					view_add_txt(TXS_LABEL_MEMO_CONTENT, hex);
-					free(hex);
-				}
-			}
-		}
-	} else {
-		view_add_txt(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_TITLE));
-		view_add_txt(TXS_LABEL_MEMO_CONTENT, "");
-	}
+
+    int has_gas_station = 0;
+    int offset = 0;
+    if (coin_type == COIN_TYPE_TRC20 && is_not_empty_string(msg->transaction.gas_station)) {
+        view_add_txt(TXS_LABEL_FEED_TITLE, res_getLabel(LANG_LABEL_TXS_FEED_TITLE));
+        view_add_txt(TXS_LABEL_FEED_VALUE, msg->transaction.gas_station);
+        view_add_txt(TXS_LABEL_GAS_STATION_VALUE, "Gas Balance");
+        has_gas_station = 1;
+    }
+
+    if (!is_empty_string(transaction->memo)) {
+        if (has_gas_station) {
+            view->total_height = 3 * SCREEN_HEIGHT;
+            offset = 150;
+        }
+        if (is_printable_str(transaction->memo)) {
+            view_add_txt_off(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_TITLE), offset);
+            view_add_txt_off(TXS_LABEL_MEMO_CONTENT, transaction->memo, offset);
+        } else {
+            view_add_txt_off(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_HEX_TITLE), offset);
+            ret = strlen(transaction->memo);
+            if (ret * 2 < (int) sizeof(tmpbuf)) {
+                bin_to_hex((const unsigned char *) transaction->memo, ret, tmpbuf);
+                view_add_txt_off(TXS_LABEL_MEMO_CONTENT, tmpbuf, offset);
+            } else {
+                char *hex = (char *) malloc((ret + 1) * 2);
+                if (hex) {
+                    memset(hex, 0, (ret + 1) * 2);
+                    bin_to_hex((const unsigned char *) transaction->memo, ret, hex);
+                    view_add_txt_off(TXS_LABEL_MEMO_CONTENT, hex, offset);
+                    free(hex);
+                }
+            }
+        }
+    } else {
+        offset = has_gas_station ? 80 : 0;
+        view_add_txt_off(TXS_LABEL_MEMO_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_TITLE), offset);
+        view_add_txt_off(TXS_LABEL_MEMO_CONTENT, "", offset);
+    }
 	
 	//save coin info
 	if (view->msg_from == MSG_FROM_QR_APP) {

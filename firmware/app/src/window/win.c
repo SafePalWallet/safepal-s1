@@ -24,6 +24,7 @@ static const char *GWinName[WINDOWID_MAXID] = {
 		"PASSPHRASE",
 		"VERIFY",
 		"VERIFY_CODE",
+		"RAW_DATA",
 };
 
 void win_init() {

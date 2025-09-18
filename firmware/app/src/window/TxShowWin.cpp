@@ -14,7 +14,7 @@ enum {
 	TXS_ICON_COIN_TYPE = 0,
 	TXS_ICON_NAVI_UP_DOWN,
 	TXS_ICON_NAVI_CANCEL,
-	TXS_ICON_NAVI_MORE,
+	TXS_ICON_NAVI_RAW,
 	TXS_ICON_NAVI_OK,
 	TXS_ICON_MAXID,
 };
@@ -23,7 +23,7 @@ enum {
 	TXS_LABEL_COIN_SYMBOL,
 	TXS_LABEL_COIN_NAME,
 	TXS_LABEL_CANCEL,
-	TXS_LABEL_MORE,
+	TXS_LABEL_RAW,
 	TXS_LABEL_MAXID,
 };
 
@@ -31,16 +31,16 @@ TxShowWin::TxShowWin() {
 	int icon_mk_map[TXS_ICON_MAXID] = {
 			MK_sign_icon_coin_type,
 			MK_sign_icon_navi_up_down,
-			MK_sign_icon_navi_cancel,
-			MK_sign_icon_navi_more,
+			MK_sign_icon_navi_cancel_1,
+            MK_sign_icon_navi_raw,
 			MK_sign_icon_navi_ok,
 	};
 
 	int label_mk_map[TXS_LABEL_MAXID] = {
 			MK_sign_label_coin_symbol,
 			MK_sign_label_coin_name,
-			MK_sign_label_cancel,
-			MK_sign_label_more,
+			MK_sign_label_cancel_1,
+            MK_sign_label_raw,
 	};
 
 	memset(mDView, 0, sizeof(DynamicViewCtx));
@@ -50,7 +50,7 @@ TxShowWin::TxShowWin() {
 	mMsgFrom = MSG_FROM_QR_APP;
 	mClientMessage = NULL;
 	mShowRet = -1;
-	mIsShowMore = 0;
+	mIsShowRawData = 0;
 	mBitmapLogo = (BITMAP *) calloc(1, sizeof(BITMAP));
 	initLayout(TXS_ICON_MAXID, icon_mk_map, TXS_LABEL_MAXID, label_mk_map);
 }
@@ -98,11 +98,12 @@ int TxShowWin::keyProc(int keyCode, int isLongPress) {
 		case INPUT_KEY_LEFT:
 			if (mMsgFrom == MSG_FROM_QR_HISTORY) {
 				return WINDOWID_SIGN_HISTORY;
-			} else if (mMsgFrom == MSG_FROM_QR_APP && (mScrollSize + mScreenHeight) >= mTotalHeight) {
+			} else if (mMsgFrom == MSG_FROM_QR_APP) {
 				return WINDOWID_TX_VERIFY_CODE;
 			}
 			break;
 		case INPUT_KEY_RIGHT:
+#if 0
 			if (mScrollSize + mScreenHeight < mTotalHeight) {
 				//scrollWindow(1); //like KEY_DOWN
 			} else if (mDView->has_more) {
@@ -110,6 +111,11 @@ int TxShowWin::keyProc(int keyCode, int isLongPress) {
 				GuiMain::getInstance()->sendMessage(WINDOWID_TXMORE, MSG_TXMORE_TXP_MSG, 0, (LPARAM) mTxp);
 				return WINDOWID_TXMORE;
 			}
+#else
+            mIsShowRawData = 1;
+            GuiMain::getInstance()->sendMessage(WINDOWID_TX_RAW_DATA, (mMsgFrom == MSG_FROM_QR_HISTORY) ? MSG_HISTORY_QR_RESULT : MSG_TXSHOW_MSG, 0, (LPARAM) mClientMessage);
+            return WINDOWID_TX_RAW_DATA;
+#endif
 			break;
 	}
 	return 0;
@@ -118,7 +124,7 @@ int TxShowWin::keyProc(int keyCode, int isLongPress) {
 int TxShowWin::getIconState(int id) {
 	switch (id) {
 		case TXS_ICON_NAVI_CANCEL:
-		case TXS_ICON_NAVI_MORE:
+		case TXS_ICON_NAVI_RAW:
 		case TXS_ICON_NAVI_OK:
 			return 0;
 	}
@@ -163,9 +169,9 @@ int TxShowWin::onResume() {
 		db_error("invalid client msg");
 		return -1;
 	}
-	if (mIsShowMore) {
-		db_msg("jump from show more,skip");
-		mIsShowMore = 0;
+	if (mIsShowRawData) {
+		db_msg("jump from raw data,skip");
+		mIsShowRawData = 0;
 		return 0;
 	}
 	freeWinData();
@@ -209,14 +215,18 @@ int TxShowWin::onResume() {
 		showIcon(TXS_ICON_NAVI_OK, true);
 		setLabelText(TXS_LABEL_CANCEL, res_getLabel(LANG_LABEL_BACK));
 	}
+#if 0
 	if (mDView->has_more) {
-		showIcon(TXS_ICON_NAVI_MORE, true);
-		setLabelText(TXS_LABEL_MORE, res_getLabel(LANG_LABEL_TXS_MORE), 1);
+		showIcon(TXS_ICON_NAVI_RAW, true);
+		setLabelText(TXS_LABEL_RAW, res_getLabel(LANG_LABEL_TXS_MORE), 1);
 	} else {
-		showIcon(TXS_ICON_NAVI_MORE, false);
-		setLabelText(TXS_LABEL_MORE, "", 0);
+		showIcon(TXS_ICON_NAVI_RAW, false);
+		setLabelText(TXS_LABEL_RAW, "", 0);
 	}
-
+#else
+    showIcon(TXS_ICON_NAVI_RAW, true);
+    setLabelText(TXS_LABEL_RAW, "Raw", 1);
+#endif
 	if (is_not_empty_string(mDView->coin_symbol)) {
 		ret = 1; //font
 		if (mDView->flag & 0x1) { //small
@@ -243,8 +253,9 @@ int TxShowWin::onResume() {
 	} else {
 		updateIcon(TXS_ICON_NAVI_UP_DOWN, 0, false);
 	}
+    showIcon(TXS_ICON_NAVI_CANCEL, true);
 
-	//show logo
+    //show logo
 	PicObj *coin_icon = mIcons[TXS_ICON_COIN_TYPE];
 	db_msg("coin_icon:%p mBitmapLogo:%p", coin_icon, mBitmapLogo);
 	if (coin_icon && mBitmapLogo) {
@@ -275,7 +286,7 @@ int TxShowWin::onResume() {
 
 int TxShowWin::onPause() {
 	set_temp_screen_time(0);
-	if (!mIsShowMore) {
+	if (!mIsShowRawData) {
 		freeWinData();
         if (mClientMessage != NULL && mMsgFrom == MSG_FROM_QR_HISTORY) {
             proto_client_message_delete(mClientMessage);
@@ -299,14 +310,39 @@ int TxShowWin::onScrollWindow(int scroll_size) {
 				state |= 2;
 			}
 		}
-		res_getPos(MK_sign_icon_navi_up_down, &rect);
 		db_msg("state:%d", state);
 		if (state) {
+            res_getPos(MK_sign_icon_navi_up_down, &rect);
 			MoveWindow(hwnd, rect.x, rect.y, rect.w, rect.h, FALSE);
 		}
 		updateIcon(TXS_ICON_NAVI_UP_DOWN, state);
 	}
-	return 0;
+    if (mTotalHeight > mScreenHeight) {
+        hwnd = getIconHwnd(TXS_ICON_NAVI_CANCEL);
+        if (IS_VALID_HWND(hwnd)) {
+            res_getPos(MK_sign_icon_navi_cancel_1, &rect);
+            MoveWindow(hwnd, rect.x, rect.y, rect.w, rect.h, FALSE);
+        }
+
+        hwnd = getLabelHwnd(TXS_LABEL_CANCEL);
+        if (IS_VALID_HWND(hwnd)) {
+            res_getPos(MK_sign_label_cancel_1, &rect);
+            MoveWindow(hwnd, rect.x, rect.y, rect.w, rect.h, FALSE);
+        }
+
+        hwnd = getIconHwnd(TXS_ICON_NAVI_RAW);
+        if (IS_VALID_HWND(hwnd)) {
+            res_getPos(MK_sign_icon_navi_raw, &rect);
+            MoveWindow(hwnd, rect.x, rect.y, rect.w, rect.h, FALSE);
+        }
+
+        hwnd = getLabelHwnd(TXS_LABEL_RAW);
+        if (IS_VALID_HWND(hwnd)) {
+            res_getPos(MK_sign_label_raw, &rect);
+            MoveWindow(hwnd, rect.x, rect.y, rect.w, rect.h, FALSE);
+        }
+    }
+    return 0;
 }
 
 int TxShowWin::initDView() {
@@ -342,7 +378,7 @@ int TxShowWin::onSignReqData(ProtoClientMessage *req) {
     db_msg("mClientMessage:%p", mClientMessage);
     freeWinData();
 	mShowRet = -1;
-	mIsShowMore = 0;
+	mIsShowRawData = 0;
 	mClientMessage = req;
 	if (mClientMessage) {
 		initDView();

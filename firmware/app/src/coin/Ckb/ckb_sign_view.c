@@ -86,7 +86,6 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
     int total_height = first_output_offset + mScreenHeight * ((item_count + num_perpage - 1) / num_perpage);
     db_msg("total_height:%d mScreenHeight:%d item_count:%d num_perpage:%d output_item_height:%d",
            total_height, mScreenHeight, item_count, num_perpage, output_item_height);
-    view->total_height = total_height;
     view->coin_type = COIN_TYPE_CKB;
     view->coin_uname = coinConfig->uname;
     view->coin_name = coinConfig->name;
@@ -99,7 +98,7 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
         for (i = 0; i < msg->output_n; i++) {
             if (!(msg->outputs[i].is_change_address & CKB_OUTPUT_FLAG_CHANGE)) continue;
 
-            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height;
+            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height + view->total_height;
 
             dwin_add_txt_offset(view, MK_txs_dlabel_pay_from_index, viewid++, res_getLabel(LANG_LABEL_TXS_CHANGE_TITLE), offset);
             db_msg("outputs.address.length %d %d", strlen(msg->outputs[i].address), CKB_SHORT_ADDR_LEN);
@@ -124,7 +123,7 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
             } else {
                 strlcpy(tmpbuf, res_getLabel(LANG_LABEL_TXS_FROM_TITLE), sizeof(tmpbuf));
             }
-            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height;
+            offset = first_output_offset + (item_index / num_perpage) * mScreenHeight + (item_index % num_perpage) * output_item_height + view->total_height;
             dwin_add_txt_offset(view, MK_txs_dlabel_pay_from_index, viewid++, tmpbuf, offset);
 
             db_msg("inputs.address.length %d %d", strlen(msg->inputs[i].address), CKB_SHORT_ADDR_LEN);
@@ -142,14 +141,13 @@ static int on_sign_show_more(void *session, DynamicViewCtx *view) {
             item_index++;
         }
     }
+    view->total_height += total_height;
+
     return 0;
 }
 
 static int on_sign_show(void *session, DynamicViewCtx *view) {
     char tmpbuf[128];
-    if (view->show_more) {
-        return on_sign_show_more(session, view);
-    }
     coin_state *s = (coin_state *) session;
     if (!s) {
         db_error("invalid session");
@@ -362,6 +360,10 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
     } else {
         db_error("invalid operation_type:%d", msg->operation_type);
         return UNSUPPORT_MSG_UPGRADE_TRY_AGAIN;
+    }
+
+    if (view->has_more) {
+        return on_sign_show_more(session, view);
     }
 
     return 0;
