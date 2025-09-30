@@ -21,13 +21,6 @@ enum {
 	TXS_LABEL_COIN_SYMBOL,
 	TXS_LABEL_COIN_NAME,
 	TXS_LABEL_CANCEL,
-    TXS_LABEL_RAW_DATA_VALUE,
-    TXS_LABEL_RAW_DATA_VALUE1,
-    TXS_LABEL_RAW_DATA_VALUE2,
-    TXS_LABEL_RAW_DATA_VALUE3,
-    TXS_LABEL_RAW_DATA_VALUE4,
-    TXS_LABEL_RAW_DATA_VALUE5,
-    TXS_LABEL_RAW_DATA_VALUE6,
 	TXS_LABEL_MAXID,
 };
 
@@ -47,13 +40,6 @@ TxRawDataWin::TxRawDataWin() {
 			MK_sign_label_coin_symbol,
             MK_cmsg_label_title1,
             MK_sign_label_cancel_1,
-            MK_eth_label_raw_data_value,
-            MK_eth_label_raw_data_value1,
-            MK_eth_label_raw_data_value2,
-            MK_eth_label_raw_data_value3,
-            MK_eth_label_raw_data_value4,
-            MK_eth_label_raw_data_value5,
-            MK_eth_label_raw_data_value6,
 	};
 
 	memset(mDView, 0, sizeof(DynamicViewCtx));
@@ -367,43 +353,13 @@ int TxRawDataWin::onResume() {
         db_msg("seg:%d str:%s", i, segments[i]);
     }
     mTotalHeight = count * SCREEN_HEIGHT;
-    setLabelText(TXS_LABEL_RAW_DATA_VALUE, (const char *) segments[0]);
-    switch (count) {
-        case 2:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            break;
-        case 3:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE2, (const char *) segments[2]);
-            break;
-        case 4:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE2, (const char *) segments[2]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE3, (const char *) segments[3]);
-            break;
-        case 5:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE2, (const char *) segments[2]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE3, (const char *) segments[3]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE4, (const char *) segments[4]);
-            break;
-        case 6:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE2, (const char *) segments[2]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE3, (const char *) segments[3]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE4, (const char *) segments[4]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE5, (const char *) segments[5]);
-            break;
-        case 7:
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE1, (const char *) segments[1]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE2, (const char *) segments[2]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE3, (const char *) segments[3]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE4, (const char *) segments[4]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE5, (const char *) segments[5]);
-            setLabelText(TXS_LABEL_RAW_DATA_VALUE6, (const char *) segments[6]);
-            break;
-        default:
-            break;
+    initDView();
+    int viewid = 100;
+    dwin_add_txt_offset(mDView, MK_eth_label_raw_data_value, viewid++, (const char *) segments[0], 0);
+    if (count > 1) {
+        for (int i = 1; i < count; i++) {
+            dwin_add_txt_offset(mDView, MK_eth_label_raw_data_value1, viewid++, (const char *) segments[i], (i - 1) * SCREEN_HEIGHT);
+        }
     }
 
     if (mTotalHeight > mScreenHeight) {

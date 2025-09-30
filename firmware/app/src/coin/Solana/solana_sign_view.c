@@ -72,7 +72,11 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 	coin_type = msg->coin.type;
 	coin_uname = msg->coin.uname;
 	if (((char)msg->operation_type==OP_TYPE_TOKENTRANSFER) || ((char)msg->operation_type==OP_TYPE_CREATE_AND_TRANSFER) ||
-	    ((char)msg->operation_type==OP_TYPE_TOEKN2022_TRANSFER) || ((char)msg->operation_type==OP_TYPE_TOEKN2022_CREATE_AND_TRANSFER)
+	    ((char)msg->operation_type==OP_TYPE_TOEKN2022_TRANSFER) || ((char)msg->operation_type==OP_TYPE_TOEKN2022_CREATE_AND_TRANSFER) ||
+		((char)msg->operation_type==OP_TYPE_REG_NONCE) || ((char)msg->operation_type==OP_TYPE_TRANSFER_HARDWARE) ||
+		((char)msg->operation_type==OP_TYPE_TOKENTRANSFER_HARDWARE) || ((char)msg->operation_type==OP_TYPE_TOKENTRANSFER_HARDWARE_CREATE) ||
+		((char)msg->operation_type==OP_TYPE_TOEKN2022_TRANSFER_HARDWARE) || ((char)msg->operation_type==OP_TYPE_TOEKN2022_TRANSFER_HARDWARE_CREATE)
+
 	) {
 		if (is_empty_string(msg->token.name) || is_empty_string(msg->token.symbol)) {
 			db_error("invalid dtoken name:%s or symbol:%s", msg->token.name, msg->token.symbol);
@@ -334,6 +338,86 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 		view->total_height = SCREEN_HEIGHT;
 		format_data_to_hex(msg->action.swap.message_data.bytes, msg->action.swap.message_data.size, str, sizeof(str));
 		view_add_txt(TXS_LABEL_APP_MSG_VALUE, str);
+	} else if ((char) msg->operation_type == OP_TYPE_REG_NONCE) {
+		db->tx_type = TX_TYPE_APP_SIGN_MSG;
+		view->total_height = SCREEN_HEIGHT;
+		view_add_txt(TXS_LABEL_TOTAL_VALUE, "Type");
+		view_add_txt(TXS_LABEL_TOTAL_MONEY, "Enable Durable Nonces");
+		view_add_txt(TXS_LABEL_FEED_TILE, res_getLabel(LANG_LABEL_TXS_FEED_TITLE));
+		double fee = 0;
+		double amount = 0;
+		ret = sol_getFeeAndAmount(msg, &fee, &amount, NULL);
+		if (ret != 0) {
+			db_error("sol_getFeeAndAmount failed");
+			return ret; 
+		}
+		snprintf(tmpbuf, sizeof(tmpbuf), "%.9f SOL", fee);
+		view_add_txt(TXS_LABEL_FEED_VALUE, tmpbuf);
+	} else if (((char) msg->operation_type == OP_TYPE_TRANSFER_HARDWARE) || \
+        ((char) msg->operation_type == OP_TYPE_TOKENTRANSFER_HARDWARE) || \
+        ((char) msg->operation_type == OP_TYPE_TOKENTRANSFER_HARDWARE_CREATE) || \
+		((char) msg->operation_type == OP_TYPE_TOEKN2022_TRANSFER_HARDWARE) || \
+        ((char) msg->operation_type == OP_TYPE_TOEKN2022_TRANSFER_HARDWARE_CREATE)) {
+		if (proto_check_exchange(&msg->exchange) != 0) {
+			db_error("invalid exchange");
+			return -1;
+		}
+		double ex_rate = proto_get_exchange_rate_value(&msg->exchange);
+		const char *money_symbol = proto_get_money_symbol(&msg->exchange);
+
+		db_msg("ex_rate:%f", ex_rate);
+		db_msg("money_symbol:%s", money_symbol);
+
+		double fee = 0;
+		double amount = 0;
+		char memo[128] = {0};
+		ret = sol_getFeeAndAmount(msg, &fee, &amount, memo);
+		if (ret != 0) {
+			db_error("sol_getFeeAndAmount failed");
+			return ret; 
+		}
+
+		memset(tmpbuf, 0, sizeof(tmpbuf));
+		snprintf(tmpbuf, sizeof(tmpbuf), "%f", amount);
+		view_add_txt(TXS_LABEL_TOTAL_VALUE, tmpbuf);
+		strlcpy(db->send_value, tmpbuf, sizeof(db->send_value));
+		snprintf(db->currency_value, sizeof(db->currency_value), "%.2f", ex_rate * amount);
+
+		snprintf(tmpbuf, sizeof(tmpbuf), "≈%s%.2f", money_symbol, ex_rate * amount);
+		view_add_txt(TXS_LABEL_TOTAL_MONEY, tmpbuf);
+
+		view_add_txt(TXS_LABEL_FEED_TILE, res_getLabel(LANG_LABEL_TXS_FEED_TITLE));
+
+		memset(tmpbuf, 0, sizeof(tmpbuf));
+		snprintf(tmpbuf, sizeof(tmpbuf), "%.9f SOL", fee);
+		db_msg("feed value:%s", tmpbuf);
+		view_add_txt(TXS_LABEL_FEED_VALUE, tmpbuf);
+
+		strlcpy(db->currency_symbol, money_symbol, sizeof(db->currency_symbol));
+
+		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
+		memset(tmpbuf, 0, sizeof(tmpbuf));
+		const char *uname2 = coin_uname;
+		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+			uname2 = COIN_UNAME_SOL2;
+		}
+		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+		omit_string(tmpbuf, tmpbuf, 26, 11);
+		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
+
+		view_add_txt(TXS_LABEL_PAYTO_TITLE, res_getLabel(LANG_LABEL_TXS_PAYTO_TITLE));
+
+		omit_string(tmpbuf, msg->action.transaction.to, 26, 11);
+		view_add_txt(TXS_LABEL_PAYTO_ADDRESS, tmpbuf);
+
+		view->total_height = 2 * SCREEN_HEIGHT;
+
+		if (((strlen(memo) > 0) && (msg->operation_type == OP_TYPE_TOEKN2022_TRANSFER_HARDWARE))
+    || (msg->operation_type == OP_TYPE_TOEKN2022_TRANSFER_HARDWARE_CREATE)) {
+			view->total_height = 3 * SCREEN_HEIGHT;
+			view_add_txt(TXS_LABEL_DATA_TITLE, res_getLabel(LANG_LABEL_TX_MEMO_TITLE));
+			view_add_txt(TXS_LABEL_DATA_CONTENT, memo);
+		}
 	} else {
         db_error("invalid operation_type:%d", msg->operation_type);
         return UNSUPPORT_MSG_UPGRADE_TRY_AGAIN;
