@@ -374,6 +374,7 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_BITLAYER_721:
         case COIN_TYPE_BERA_721:
         case COIN_TYPE_VICTION_725:
+        case COIN_TYPE_VALUECHAIN_721:
 		case COIN_TYPE_FANTOM1155:
 		case COIN_TYPE_HECO1155:
 		case COIN_TYPE_OPTIMISM1155:
@@ -400,6 +401,7 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_LUMIA_1155:
         case COIN_TYPE_BITLAYER_1155:
         case COIN_TYPE_BERA_1155:
+        case COIN_TYPE_VALUECHAIN_1155:
 			p = "NFT_EVM";
 			break;
         case COIN_TYPE_TERRA:
@@ -566,7 +568,10 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_VICTION_25:
             p = "VIC_token";
             break;
-		default:
+        case COIN_TYPE_VALUECHAIN:
+            p = "SOSO_token";
+            break;
+        default:
 			p = "UNKNOW";
 	}
 	return snprintf(path, size, "%s/img/coin/%s.png", res, p);
