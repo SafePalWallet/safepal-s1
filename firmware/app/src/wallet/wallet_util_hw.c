@@ -375,6 +375,13 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_BERA_721:
         case COIN_TYPE_VICTION_725:
         case COIN_TYPE_VALUECHAIN_721:
+        case COIN_TYPE_SIDRA_721:
+        case COIN_TYPE_XLAYER_721:
+        case COIN_TYPE_PLASMA_721:
+        case COIN_TYPE_HYPER_EVM_721:
+        case COIN_TYPE_MONAD_721:
+        case COIN_TYPE_ZEROG_721:
+        case COIN_TYPE_MOONRIVER_721:
 		case COIN_TYPE_FANTOM1155:
 		case COIN_TYPE_HECO1155:
 		case COIN_TYPE_OPTIMISM1155:
@@ -402,6 +409,13 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_BITLAYER_1155:
         case COIN_TYPE_BERA_1155:
         case COIN_TYPE_VALUECHAIN_1155:
+        case COIN_TYPE_SIDRA_1155:
+        case COIN_TYPE_XLAYER_1155:
+        case COIN_TYPE_PLASMA_1155:
+        case COIN_TYPE_HYPER_EVM_1155:
+        case COIN_TYPE_MONAD_1155:
+        case COIN_TYPE_ZEROG_1155:
+        case COIN_TYPE_MOONRIVER_1155:
 			p = "NFT_EVM";
 			break;
         case COIN_TYPE_TERRA:
@@ -570,6 +584,27 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
             break;
         case COIN_TYPE_VALUECHAIN:
             p = "SOSO_token";
+            break;
+        case COIN_TYPE_SIDRA:
+            p = "SDA_token";
+            break;
+        case COIN_TYPE_XLAYER:
+            p = "OKB_token";
+            break;
+        case COIN_TYPE_PLASMA:
+            p = "XPL_token";
+            break;
+        case COIN_TYPE_HYPER_EVM:
+            p = "HYPE_token";
+            break;
+        case COIN_TYPE_MONAD:
+            p = "MON_token";
+            break;
+        case COIN_TYPE_ZEROG:
+            p = "0G_token";
+            break;
+        case COIN_TYPE_MOONRIVER:
+            p = "MOVR_token";
             break;
         default:
 			p = "UNKNOW";
