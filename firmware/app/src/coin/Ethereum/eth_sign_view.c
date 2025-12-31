@@ -307,6 +307,18 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 		}
 	}
 	bool is7702 = msg->transaction_type == ETH_TYPE_7702_UPDATE_TX || msg->transaction_type == ETH_TYPE_7702_TX;
+	bool is_7702_approval = false;
+	if (is7702) {
+		db_msg("is7702:%d msg->callInfo.type:%d", is7702, msg->callInfo.type);
+		if ((msg->callInfo.type == 1 && msg->callInfo.call_n == 1) || (msg->callInfo.type == 2 && msg->callInfo.call_n == 2)) {
+			Call call = msg->callInfo.calls[0];
+			if (call.data.size == 68 && memcmp(call.data.bytes, "\x09\x5e\xa7\xb3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16) == 0) {
+				is_7702_approval = true;
+		    }
+		}
+	}
+	db_msg("is_7702_approval:%d", is_7702_approval);
+	
 	if (config) {
 		name = config->name;
 		symbol = config->symbol;
@@ -380,14 +392,14 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
     db_msg("is_approval:%d, trans_token:%d, trans_nft:%d", is_approval, trans_token, trans_nft);
     db_msg("sign_type:%d, msg->nft_order_info.action:%d", msg->sign_type, msg->nft_order_info.action);
 
-	if (msg->sign_type == 1 || msg->sign_type == 2) {
+	if (msg->sign_type == 1 || msg->sign_type == 2 || is_7702_approval == true) {
 		if (!strcmp(msg->contract.name, "Uniswap")) {
 			coin_uname = "Uniswap";
 		} else {
 			coin_uname = "Dapp";
 		}
         symbol = msg->contract.name;//show
-        if (msg->sign_type == 1) {
+        if (msg->sign_type == 1 || is_7702_approval == true) {
             name = res_getLabel(LANG_LABEL_TX_METHOD_APPROVE);
         } else if (msg->sign_type == 2) {
             name = "Data:";
@@ -433,7 +445,7 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
     db_msg("name:%s,symbol:%s,coin_uname:%s,coin_type:%x", name, symbol, coin_uname, coin_type);
 
-	if (msg->sign_type == 0) { //trans
+	if (msg->sign_type == 0 && is_7702_approval == false) { //trans
 		double send_value = 0;
 		view->total_height = 2 * SCREEN_HEIGHT;
 		if (trans_nft) {
@@ -464,17 +476,20 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 				tmpbuf[1] = '?';
 			}
 			view_add_txt(TXS_LABEL_NFT_AMOUNT_VALUE, tmpbuf);
-		}  else if (is7702) {
-			if (msg->callInfo.call_n >= 1) {
+		} else if (is7702) {
+			if (msg->callInfo.amount) {
+				send_value = msg->callInfo.amount/1000000.0;
+			} else if (msg->callInfo.call_n >= 1) {
 			    Call calls = msg->callInfo.calls[0];
 				ret = bignum2double(calls.data.bytes + 36, 32, msg->token.decimals, &send_value, tmpbuf, sizeof(tmpbuf));
 				if (ret != 0) {
 					db_error("get send_value false ret:%d", ret);
 					tmpbuf[0] = 0;
 				}
-				snprintf(tmpbuf, sizeof(tmpbuf), "%.6lf", send_value);
-				view_add_txt(TXS_LABEL_TOTAL_VALUE, tmpbuf);
+
 			}
+			snprintf(tmpbuf, sizeof(tmpbuf), "%.6lf", send_value);
+			view_add_txt(TXS_LABEL_TOTAL_VALUE, tmpbuf);
 
 			
 			strlcpy(db->send_value, tmpbuf, sizeof(db->send_value));
@@ -645,6 +660,41 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 			format_data_to_hex(msg->data.bytes, msg->data.size, tmpbuf, sizeof(tmpbuf));
 			view_add_txt(TXS_LABEL_DATA_CONTENT, tmpbuf);
 		}
+	} else if (is_7702_approval == true) { //approval
+		db->tx_type = TX_TYPE_APP_APPROVAL;
+		snprintf(tmpbuf, sizeof(tmpbuf), "%s:", res_getLabel(LANG_LABEL_TX_COIN_TYPE));
+		view_add_txt(TXS_LABEL_APPROVE_TOKEN_TITLE, tmpbuf);
+
+		if (is_not_empty_string(msg->token.symbol)) {
+			snprintf(tmpbuf, sizeof(tmpbuf), "%s", msg->token.symbol);
+		} else if (is_not_empty_string(msg->token.name)) {
+			snprintf(tmpbuf, sizeof(tmpbuf), "%s", msg->token.name);
+		} else {
+			tmpbuf[0] = '0';
+			tmpbuf[1] = 'x';
+			bin_to_hex(msg->to.bytes, 4, tmpbuf + 2);
+			tmpbuf[10] = '.';
+			tmpbuf[11] = '.';
+			tmpbuf[12] = '.';
+			bin_to_hex(msg->to.bytes + 16, 4, tmpbuf + 12);
+		}
+		view_add_txt(TXS_LABEL_APPROVE_TOKEN_VALUE, tmpbuf);
+		strlcpy(db->send_value, tmpbuf, sizeof(db->send_value));
+
+		snprintf(tmpbuf, sizeof(tmpbuf), "%s:", res_getLabel(LANG_LABEL_TX_LIMIT));
+		view_add_txt(TXS_LABEL_APPROVE_AMOUNT_TITLE, tmpbuf);
+		tmpbuf[0] = 0;
+
+		Call call = msg->callInfo.calls[0];
+		if (buffer_is_ff(call.data.bytes + 36, 32)) {
+			view_add_txt(TXS_LABEL_APPROVE_AMOUNT_VALUE, res_getLabel(LANG_LABEL_TX_UNLIMITED));
+		} else if (msg->token.type && msg->token.decimals >= 0) {
+			double fee_value = 0;
+			ret = bignum2double(call.data.bytes + 36, 32, msg->token.decimals, &fee_value, tmpbuf, sizeof(tmpbuf));
+			if (ret == 0) {
+				view_add_txt(TXS_LABEL_APPROVE_AMOUNT_VALUE, tmpbuf);
+			}
+		}
 	} else if (msg->sign_type == 1) { //approval
 		db->tx_type = TX_TYPE_APP_APPROVAL;
 		snprintf(tmpbuf, sizeof(tmpbuf), "%s:", res_getLabel(LANG_LABEL_TX_COIN_TYPE));
@@ -687,7 +737,26 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
         return UNSUPPORT_MSG_UPGRADE_TRY_AGAIN;
     }
 
-    if (msg->sign_type == 1) {
+    if (is_7702_approval == true) {
+        view->flag |= 0x1;
+        //fee
+		view_add_txt(TXS_LABEL_SIMPLE_FEE_TITLE, res_getLabel(LANG_LABEL_TXS_FEED_TITLE));
+        memset(tmpbuf, 0, sizeof(tmpbuf));
+		if (msg->callInfo.type == 1) {
+			//gasStation
+			snprintf(tmpbuf, sizeof(tmpbuf), "%s Gas Balance", msg->callInfo.gasStation);
+		} else {
+			//token
+			if (msg->callInfo.call_n >= 2) {
+				double send_value = 0;
+				Call call = msg->callInfo.calls[msg->callInfo.call_n - 1];
+				EthTokenInfo feeToken = msg->callInfo.feeToken;
+				ret = bignum2double(call.data.bytes + 36, 32, feeToken.decimals, &send_value, tmpbuf, sizeof(tmpbuf));
+				snprintf(tmpbuf, sizeof(tmpbuf), "%.6lf %s", send_value, feeToken.symbol);
+			}
+		}
+		view_add_txt(TXS_LABEL_SIMPLE_FEE_VALUE, tmpbuf);						
+    } else if (msg->sign_type == 1) {
         view->flag |= 0x1;
         //fee
         view_add_txt(TXS_LABEL_SIMPLE_FEE_TITLE, res_getLabel(LANG_LABEL_TXS_FEED_TITLE));
