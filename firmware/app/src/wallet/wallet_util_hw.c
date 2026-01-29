@@ -206,6 +206,11 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
 		if (access(path, F_OK) == 0) {
 			return ret;
 		}
+    } else if (type == COIN_TYPE_WLD && !strcmp(uname, "ETH")) {
+		ret = snprintf(path, size, "%s/img/coin/WLD.png", res);
+		if (access(path, F_OK) == 0) {
+			return ret;
+		}
     } else if (type == COIN_TYPE_BITLAYER && !strcmp(uname, "BTC")) {
         ret = snprintf(path, size, "%s/img/coin/BTC_Bitlayer.png", res);
         if (access(path, F_OK) == 0) {
@@ -382,6 +387,8 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_MONAD_721:
         case COIN_TYPE_ZEROG_721:
         case COIN_TYPE_MOONRIVER_721:
+		case COIN_TYPE_HBAR_721:
+        case COIN_TYPE_WLD_721:
 		case COIN_TYPE_FANTOM1155:
 		case COIN_TYPE_HECO1155:
 		case COIN_TYPE_OPTIMISM1155:
@@ -416,6 +423,8 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
         case COIN_TYPE_MONAD_1155:
         case COIN_TYPE_ZEROG_1155:
         case COIN_TYPE_MOONRIVER_1155:
+		case COIN_TYPE_HBAR_1155:
+        case COIN_TYPE_WLD_1155:
 			p = "NFT_EVM";
 			break;
         case COIN_TYPE_TERRA:
@@ -605,6 +614,12 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
             break;
         case COIN_TYPE_MOONRIVER:
             p = "MOVR_token";
+            break;
+		case COIN_TYPE_HBAR:
+            p = "HBAR_token";
+            break;        
+		case COIN_TYPE_WLD:
+            p = "WLD_token";
             break;
         default:
 			p = "UNKNOW";
