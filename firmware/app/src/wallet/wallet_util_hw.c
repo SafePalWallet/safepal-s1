@@ -621,6 +621,15 @@ int get_coin_icon_path(int type, const char *uname, char *path, int size) {
 		case COIN_TYPE_WLD:
             p = "WLD_token";
             break;
+		case COIN_TYPE_ENI:
+            p = "ENI_token";
+            break;
+		case COIN_TYPE_MST:
+            p = "MST_token";
+            break;
+		case COIN_TYPE_LEMON:
+            p = "LEMON_token";
+            break;
         default:
 			p = "UNKNOW";
 	}

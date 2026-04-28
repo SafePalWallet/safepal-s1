@@ -274,8 +274,10 @@ int TxVerifyCodeWin::onResume() {
 	mShowRet = mTxp->onInit(mTxp->session);
 	if (mShowRet != 0) {
 		db_error("TX init ret:%d", mShowRet);
-		dialog_error3(mHwnd, mShowRet, "Init tx failed.");
-		return -1;
+		dialog_error3(mHwnd, mShowRet, res_getLabel(LANG_LABEL_UNSUPPORT_MSG));
+        freeWinData();
+        PostMessage(GuiMain::getInstance()->getHwnd(), MSG_CHANGE_WINDOW, WINDOWID_MAINPANEL, 0);
+        return -1;
 	}
 
     //get mDView for saving coin and history, but not show mDView
@@ -284,11 +286,11 @@ int TxVerifyCodeWin::onResume() {
     if (mShowRet < 0) {
         if (mShowRet == -181) {
             dialog_error(mHwnd, res_getLabel(LANG_LABEL_WALLET_NO_SUPPORT_TOKEN));
-        } else if (mShowRet == UNSUPPORT_MSG_UPGRADE_TRY_AGAIN) {
-            dialog_error(mHwnd, res_getLabel(LANG_LABEL_UNSUPPORT_MSG));
         } else {
-            dialog_error3(mHwnd, mShowRet, "Show tx info failed.");
+            dialog_error3(mHwnd, mShowRet, res_getLabel(LANG_LABEL_UNSUPPORT_MSG));
         }
+        freeWinData();
+        PostMessage(GuiMain::getInstance()->getHwnd(), MSG_CHANGE_WINDOW, WINDOWID_MAINPANEL, 0);
         return -1;
     }
 
