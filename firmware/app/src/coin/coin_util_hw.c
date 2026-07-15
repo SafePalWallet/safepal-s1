@@ -2,6 +2,7 @@
 #include "coin_util_hw.h"
 #include "common_util.h"
 #include "bignum.h"
+#include "wallet_adapter_hw.h"
 
 int is_coin_address_long(int coinid, const char *uname) {
     if (coinid == COIN_TYPE_BITCOIN && strncmp(uname, COIN_UNAME_BTC4, 5) == 0) {
@@ -133,6 +134,35 @@ int bignum2double(const unsigned char *bytes, int size, uint8_t decimals, double
 		db_msg("f:%.18lf value:%.18lf", f, *value);
 	}
 	return 0;
+}
+
+int is_sub_account_path(const char *path) {
+    if (is_empty_string(path)) return 0;
+    CoinPathInfo info;
+    memzero(&info, sizeof(CoinPathInfo));
+    if (parse_coin_path(&info, path) != 0 || info.hn < 3) return 0;
+    if (info.an > 0) return info.avalues[info.an - 1] > 0 ? 1 : 0;
+    return info.hvalues[2] > 0 ? 1 : 0;
+}
+
+int wallet_gen_address_by_path(char *address, int size, int coin_type, const char *coin_uname, const char *path, int testnet) {
+    uint32_t index = 0;
+    if (is_not_empty_string(path)) {
+        db_msg("coin path:%s", path);
+        CoinPathInfo info;
+        memzero(&info, sizeof(CoinPathInfo));
+        if (parse_coin_path(&info, path) != 0 || info.hn < 3) {
+            db_error("invalid path type:%d uname:%s path:%s", coin_type, coin_uname, path);
+            return -2;
+        }
+        db_msg("info.hn:%d,%d,%d", info.hn, info.hvalues[0], info.hvalues[info.hn - 1]);
+        db_msg("info.an:%d,%d,%d", info.an, info.avalues[0], info.avalues[info.an - 1]);
+        if (info.an == COIN_PATH_MAX_ANUM) {
+            index = info.avalues[info.an - 1];
+        }
+    }
+    db_msg("coin_type:%d uname:%s index:%d testnet:%d", coin_type, coin_uname, index, testnet);
+    return wallet_gen_address(address, size, NULL, coin_type, coin_uname, index, testnet);
 }
 
 int bignum_print(const unsigned char *bytes, int size, uint8_t decimals, const char *prefix, char *value_str, size_t value_str_size) {

@@ -204,5 +204,11 @@ static const char *CONFIG_MKEY[] = {
     "xlm_asset_issuer_value",
     "tx_verify_code_tip",
     "tx_verify_code_value",
-    "txs_dlabel_payto_value_single_addr"
+    "txs_dlabel_payto_value_single_addr",
+    "batch_sign_verify_code_tip",
+    "batch_sign_verify_code_value",
+    "batch_sign_list_container",
+    "batch_sign_item_name",
+    "batch_sign_item_bg",
+    "batch_sign_item_highlight"
 };

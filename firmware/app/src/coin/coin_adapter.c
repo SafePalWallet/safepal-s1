@@ -5,6 +5,8 @@
 #include "settings.h"
 #include "qr_pack.h"
 
+BatchSignCollector gBatchSignCollector = {0};
+
 int tx_common_show_sign_result(HWND hwnd, const ProtoClientMessage *msg, struct pbc_wmessage *sigmsg, int msgtype) {
     struct pbc_slice slice, slice_ext_head;
     int ret = 0;
@@ -46,6 +48,18 @@ int tx_common_show_sign_result(HWND hwnd, const ProtoClientMessage *msg, struct 
 
     memcpy(merge_buff, slice_ext_head.buffer, slice_ext_head.len);
     memcpy(merge_buff + slice_ext_head.len, slice.buffer, slice.len);
+
+    if (gBatchSignCollector.active) {
+        gBatchSignCollector.data = merge_buff;
+        gBatchSignCollector.size = (int)(slice.len + slice_ext_head.len);
+        gBatchSignCollector.msg_type = msgtype;
+        gBatchSignCollector.flag = msg->flag | QR_FLAG_EXT_HEADER;
+        gBatchSignCollector.client_id = msg->client_id;
+        proto_delete_wmessage(sigmsg);
+        proto_delete_wmessage(wmsg_wrapper);
+        return 0;
+    }
+
     uint16_t flag = msg->flag | QR_FLAG_EXT_HEADER;
     db_msg("result sz:%d data:%s", slice.len+slice_ext_head.len, debug_bin_to_hex((const char *) merge_buff, slice.len+slice_ext_head.len));
     ret = showQRWindow(hwnd, msg->client_id, flag, msgtype, (const unsigned char *) merge_buff,

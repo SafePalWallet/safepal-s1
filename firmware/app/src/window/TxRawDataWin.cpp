@@ -8,6 +8,8 @@
 #include "debug.h"
 #include "wallet_util_hw.h"
 #include "coin_util_hw.h"
+#include "protobuf_util.h"
+#include "tx_common.h"
 
 enum {
 	TXS_ICON_COIN_TYPE = 0,
@@ -47,6 +49,7 @@ TxRawDataWin::TxRawDataWin() {
 
 	mHwndNaviPanel = HWND_INVALID;
 	mMsgFrom = MSG_FROM_QR_APP;
+	mReturnWinId = WINDOWID_TXSHOW;
 	mClientMessage = NULL;
 	mShowRet = -1;
     mRawDataStr = NULL;
@@ -69,6 +72,7 @@ PROC_RET TxRawDataWin::winProc(HWND hWnd, PROC_MSG_TYPE message, WPARAM wParam, 
         case MSG_HISTORY_QR_RESULT:
         case MSG_TXSHOW_MSG: {
             mMsgFrom = (message == MSG_HISTORY_QR_RESULT) ? MSG_FROM_QR_HISTORY : MSG_FROM_QR_APP;
+            mReturnWinId = wParam ? (int) wParam : WINDOWID_TXSHOW;
 			onSignReqData((ProtoClientMessage *) lParam);
 		}
 			break;
@@ -97,7 +101,7 @@ int TxRawDataWin::keyProc(int keyCode, int isLongPress) {
 			scrollWindow(1);
 			break;
 		case INPUT_KEY_LEFT:
-			return WINDOWID_TXSHOW;
+			return mReturnWinId;
 		case INPUT_KEY_RIGHT:
 			break;
 	}
@@ -196,42 +200,6 @@ static int splitString(const char *input, int segment_length, char segments[MAX_
     }
 
     return total_segments;
-}
-
-static int GetExtHeaderLen(const ProtoClientMessage *msg) {
-    size_t len = 0;
-    if (msg && msg->data) {
-        if (msg->flag & QR_FLAG_HAS_TIME) {
-            len += 6;
-            if (msg->data->len < len) { //error
-                db_error("invalid data len:%d < time len:6", msg->data->len);
-                return -1;
-            }
-        }
-        if (msg->flag & QR_FLAG_EXT_HEADER) {
-            if (msg->data->len < (len + 11)) {
-                db_error("invalid data len:%d from len:%d", msg->data->len, len);
-                return -2;
-            }
-            if (msg->data->str[len] != 0x7a) { //tag string 15
-                return -3;
-            }
-            uint32_t low = 0;
-            uint32_t hi = 0;
-            len += 1;
-            len += pb_decode((uint8_t *) (msg->data->str + len), &low, &hi); //varlen
-            if (hi != 0 || low >= 0x4000) {
-                db_error("invalid ext header var len:%d %d", low, hi);
-                return -4;
-            }
-            len += low;
-            if (msg->data->len < len) {
-                db_error("invalid data len:%d < %d varlen:%d", msg->data->len, len, low);
-                return -5;
-            }
-        }
-    }
-    return (int) len;
 }
 
 int TxRawDataWin::onResume() {
@@ -461,28 +429,6 @@ int TxRawDataWin::onSignReqData(ProtoClientMessage *req) {
 	return 0;
 }
 
-static int tx_save_history(const ProtoClientMessage *msg, DBTxCoinInfo *db) {
-	DBTxInfo tx[1];
-	tx->msg_type = msg->type;
-	tx->time = msg->time;
-	tx->time_zone = msg->time_zone;
-	tx->client_id = msg->client_id;
-
-	memcpy(&tx->flag, db, sizeof(DBTxCoinInfo)); //struct is same,hack copy
-
-	tx->data = proto_client_message_serialize(msg);
-	if (!tx->data) {
-		db_error("serialize msg false");
-		return -1;
-	}
-	int ret = storage_saveTxsInfo(tx);
-	cstr_free(tx->data);
-	if (ret != 0) {
-		db_error("saveTxsInfo false");
-		return -1;
-	}
-	return 0;
-}
 
 int TxRawDataWin::doSignReq() {
 	db_msg("doSignReq");

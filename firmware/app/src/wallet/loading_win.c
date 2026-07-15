@@ -14,6 +14,10 @@
 
 int loading_win_processing = 0;
 
+// When set, loading_win_stop() is suppressed so the window stays up across a
+// batch of operations (see loading_win_set_hold). RAM-only, defaults to 0.
+static int loading_win_hold = 0;
+
 #define CACHE_LOADING_BITMAP
 
 #define IS_VALID_HWND(x) ((x) && (x) != HWND_INVALID)
@@ -179,7 +183,16 @@ int loading_win_start(HWND hwnd, const char *title, const char *detail, int styl
 	return 0;
 }
 
+void loading_win_set_hold(int hold) {
+	loading_win_hold = hold ? 1 : 0;
+	db_msg("set hold:%d", loading_win_hold);
+}
+
 void loading_win_stop() {
+	if (loading_win_hold) {
+		db_msg("stop held, skip");
+		return;
+	}
 	db_msg("stop");
 	LOCK();
 	loading_win_processing = 0;

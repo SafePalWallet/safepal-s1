@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "wallet_util_hw.h"
 #include "coin_util_hw.h"
+#include "tx_common.h"
 
 enum {
 	TXS_ICON_COIN_TYPE = 0,
@@ -386,28 +387,6 @@ int TxShowWin::onSignReqData(ProtoClientMessage *req) {
 	return 0;
 }
 
-static int tx_save_history(const ProtoClientMessage *msg, DBTxCoinInfo *db) {
-	DBTxInfo tx[1];
-	tx->msg_type = msg->type;
-	tx->time = msg->time;
-	tx->time_zone = msg->time_zone;
-	tx->client_id = msg->client_id;
-
-	memcpy(&tx->flag, db, sizeof(DBTxCoinInfo)); //struct is same,hack copy
-
-	tx->data = proto_client_message_serialize(msg);
-	if (!tx->data) {
-		db_error("serialize msg false");
-		return -1;
-	}
-	int ret = storage_saveTxsInfo(tx);
-	cstr_free(tx->data);
-	if (ret != 0) {
-		db_error("saveTxsInfo false");
-		return -1;
-	}
-	return 0;
-}
 
 int TxShowWin::doSignReq() {
 	db_msg("doSignReq");

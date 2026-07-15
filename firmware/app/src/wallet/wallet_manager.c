@@ -269,6 +269,7 @@ int wallet_initDefaultCoin(const unsigned char *passwd) {
     wallet_genDefaultPubHDNode(passwd, COIN_TYPE_ARBITRUM, "ARETH");
     wallet_genDefaultPubHDNode(passwd, COIN_TYPE_SOLANA, "SOL");
     wallet_genDefaultPubHDNode(passwd, COIN_TYPE_SOLANA, COIN_UNAME_SOL2);
+    wallet_genDefaultPubHDNode(passwd, COIN_TYPE_TRX, "TRX");
 
 	return 0;
 }

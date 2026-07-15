@@ -53,6 +53,7 @@ private:
     int mShowRet;
     BITMAP *mBitmapLogo;
     int mMsgFrom;
+    int mReturnWinId;
     char *mRawDataStr;
 };
 

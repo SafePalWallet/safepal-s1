@@ -33,6 +33,7 @@
 #include "wallet_util_hw.h"
 #include "TxVerifyCodeWin.h"
 #include "TxRawDataWin.h"
+#include "BatchSignWin.h"
 
 #define WINID_CAN_QUICK_SCAN(w) ((w)==WINDOWID_MAINPANEL||(w)==WINDOWID_SETTING||(w)==WINDOWID_COINS_MANAGER||(w)==WINDOWID_COIN_DETAIL||(w)==WINDOWID_SIGN_HISTORY)
 
@@ -132,6 +133,9 @@ CommonWindow *GuiMain::getWindowObject(int windowID, int create) {
 			break;
 		case WINDOWID_TX_RAW_DATA:
 			win = new TxRawDataWin();
+			break;
+		case WINDOWID_BATCH_SIGN:
+			win = new BatchSignWin();
 			break;
 		default:
 			db_error("unkown win:%d", windowID);

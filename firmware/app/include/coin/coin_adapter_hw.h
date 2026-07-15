@@ -14,9 +14,20 @@
 
 #define sign_loading_win_start() loading_win_start(hwnd, res_getLabel(LANG_LABEL_TX_SIGNING), NULL, 0)
 
+typedef struct {
+    int active;
+    unsigned char *data;
+    int size;
+    uint16_t msg_type;
+    uint16_t flag;
+    int client_id;
+} BatchSignCollector;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern BatchSignCollector gBatchSignCollector;
 
 void tx_set_db_view(const CoinConfig *config, DBTxCoinInfo *db, DynamicViewCtx *view);
 

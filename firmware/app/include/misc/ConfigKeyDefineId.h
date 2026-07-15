@@ -205,5 +205,11 @@ enum {
     MK_tx_verify_code_tip,
     MK_tx_verify_code_value,
     MK_txs_dlabel_payto_value_single_addr,
+    MK_batch_sign_verify_code_tip,
+    MK_batch_sign_verify_code_value,
+    MK_batch_sign_list_container,
+    MK_batch_sign_item_name,
+    MK_batch_sign_item_bg,
+    MK_batch_sign_item_highlight,
     MK_MAX_ID
 };

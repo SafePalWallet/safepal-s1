@@ -188,12 +188,16 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
 		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
 		memset(tmpbuf, 0, sizeof(tmpbuf));
-		const char *uname2 = coin_uname;
-		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
-			uname2 = COIN_UNAME_SOL2;
+		if (is_sub_account_path(msg->coin.path) && is_not_empty_string(msg->from_address)) {
+			omit_string(tmpbuf, msg->from_address, 26, 11);
+		} else {
+			const char *uname2 = coin_uname;
+			if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+				uname2 = COIN_UNAME_SOL2;
+			}
+			wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+			omit_string(tmpbuf, tmpbuf, 26, 11);
 		}
-		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
-		omit_string(tmpbuf, tmpbuf, 26, 11);
 		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
 
 		view_add_txt(TXS_LABEL_PAYTO_TITLE, res_getLabel(LANG_LABEL_TXS_PAYTO_TITLE));
@@ -264,12 +268,16 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
 		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
 		memset(tmpbuf, 0, sizeof(tmpbuf));
-		const char *uname2 = coin_uname;
-		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
-			uname2 = COIN_UNAME_SOL2;
+		if (is_sub_account_path(msg->coin.path) && is_not_empty_string(msg->from_address)) {
+			omit_string(tmpbuf, msg->from_address, 26, 11);
+		} else {
+			const char *uname2 = coin_uname;
+			if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+				uname2 = COIN_UNAME_SOL2;
+			}
+			wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+			omit_string(tmpbuf, tmpbuf, 26, 11);
 		}
-		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
-		omit_string(tmpbuf, tmpbuf, 26, 11);
 		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
 
 		view_add_txt(TXS_LABEL_PAYTO_TITLE, res_getLabel(LANG_LABEL_TXS_PAYTO_TITLE));
@@ -312,12 +320,16 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
 		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
 		memset(tmpbuf, 0, sizeof(tmpbuf));
-		const char *uname2 = coin_uname;
-		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
-			uname2 = COIN_UNAME_SOL2;
+		if (is_sub_account_path(msg->coin.path) && is_not_empty_string(msg->from_address)) {
+			omit_string(tmpbuf, msg->from_address, 26, 11);
+		} else {
+			const char *uname2 = coin_uname;
+			if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+				uname2 = COIN_UNAME_SOL2;
+			}
+			wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+			omit_string(tmpbuf, tmpbuf, 26, 11);
 		}
-		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
-		omit_string(tmpbuf, tmpbuf, 26, 11);
 		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
 
 		view_add_txt(TXS_LABEL_PAYTO_TITLE, res_getLabel(LANG_LABEL_TXS_PAYTO_TITLE));
@@ -360,12 +372,16 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 		// from
 		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
 		memset(tmpbuf, 0, sizeof(tmpbuf));
-		const char *uname2 = coin_uname;
-		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
-			uname2 = COIN_UNAME_SOL2;
+		if (is_sub_account_path(msg->coin.path) && is_not_empty_string(msg->from_address)) {
+			omit_string(tmpbuf, msg->from_address, 26, 11);
+		} else {
+			const char *uname2 = coin_uname;
+			if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+				uname2 = COIN_UNAME_SOL2;
+			}
+			wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+			omit_string(tmpbuf, tmpbuf, 26, 11);
 		}
-		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
-		omit_string(tmpbuf, tmpbuf, 26, 11);
 		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
 
 		// to
@@ -434,12 +450,16 @@ static int on_sign_show(void *session, DynamicViewCtx *view) {
 
 		view_add_txt(TXS_LABEL_PAYFROM_TITLE, res_getLabel(LANG_LABEL_TXS_PAYFROM_TITLE));
 		memset(tmpbuf, 0, sizeof(tmpbuf));
-		const char *uname2 = coin_uname;
-		if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
-			uname2 = COIN_UNAME_SOL2;
+		if (is_sub_account_path(msg->coin.path) && is_not_empty_string(msg->from_address)) {
+			omit_string(tmpbuf, msg->from_address, 26, 11);
+		} else {
+			const char *uname2 = coin_uname;
+			if (strcmp(msg->coin.path, sol_get_hd_path(COIN_TYPE_SOLANA, COIN_UNAME_SOL2)) == 0) {
+				uname2 = COIN_UNAME_SOL2;
+			}
+			wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
+			omit_string(tmpbuf, tmpbuf, 26, 11);
 		}
-		wallet_gen_address(tmpbuf, sizeof(tmpbuf), NULL, coin_type, uname2, 0, 0);
-		omit_string(tmpbuf, tmpbuf, 26, 11);
 		view_add_txt(TXS_LABEL_PAYFROM_ADDRESS, tmpbuf);
 
 		view_add_txt(TXS_LABEL_PAYTO_TITLE, res_getLabel(LANG_LABEL_TXS_PAYTO_TITLE));
